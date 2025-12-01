@@ -147,8 +147,8 @@ librosNuevos.forEach((libro) => {
 });
 
 biblioteca.busquedaAvanzada = function (autor, genero, titulo) {
-    
-    let encontrados=0;
+
+    let encontrados = 0;
     autor = autor.toLowerCase();
     genero = genero.toLowerCase();
     titulo = titulo.toLowerCase();
@@ -156,15 +156,12 @@ biblioteca.busquedaAvanzada = function (autor, genero, titulo) {
         libro.titulo.toLowerCase().includes(titulo) &&
         libro.autor.toLowerCase().includes(autor) &&
         libro.genero.toLowerCase().includes(genero)
-    ).forEach(({titulo,autor,genero}) => {
-        console.log('Se ha encontrado el libro:');
-        console.log(`Título: ${titulo}`);
-        console.log(`Autor: ${autor}`);
-        console.log(`Género: ${genero}`);
+    ).forEach(({ titulo, autor, genero }) => {
+        console.log(`Se ha encontrado el libro:\nTítulo: ${titulo}\nAutor: ${autor}\nGénero: ${genero}`);
         encontrados++;
     });
 
-    if (encontrados===0){
+    if (encontrados === 0) {
         console.log('No hay resultados.');
     }
 
@@ -180,6 +177,8 @@ biblioteca.busquedaAvanzada('Byung', 'Ensayo', 'cansancio');
 const usuarios = [
     { id: 1, nombre: 'Pepe', },
     { id: 2, nombre: 'Canelita', },
+    { id: 3, nombre: 'Eustaquio', },
+    { id: 4, nombre: 'Petronila', },
 ];
 
 const verificarIdUsuario = (id) => {
@@ -202,7 +201,7 @@ const generarPrestamo = (idLibro, idUsuario) => {
         console.log(prestamo.mensaje)
         if (prestamo.exito) {
             fechaPrestamo = new Date();
-            registro = { idLibro: idLibro, idUsuario: idUsuario, fechaPrestamo: fechaPrestamo, };
+            registro = { idLibro: idLibro, idUsuario: idUsuario, fechaPrestamo: fechaPrestamo, estado: 'ACTIVO', };
             prestamos.push(registro);
         }
     } else {
@@ -212,5 +211,130 @@ const generarPrestamo = (idLibro, idUsuario) => {
 
 };
 
+const terminarPrestamo = (idLibro, idUsuario) => {
+
+    const usuario = verificarIdUsuario(idUsuario);
+    if (usuario) {
+        const devolver = biblioteca.devolver(idLibro);
+        console.log(devolver.mensaje)
+        if (devolver.exito) {
+            fechaDevolucion = new Date();
+            const registro = prestamos.find(r => r.idLibro === idLibro);
+            registro.estado = 'TERMINADO';
+        }
+    } else {
+        console.log(`Id de usuario '${idUsuario}' no encontrado.`);
+    }
+
+
+};
+
+console.log("\n📚 PRESTAMO DE LIBROS:");
 generarPrestamo(6, 3);
 generarPrestamo(6, 2);
+generarPrestamo(9, 2);
+generarPrestamo(6, 1);
+generarPrestamo(8, 4);
+generarPrestamo(1, 1)
+
+const prestamosActivos = (idUsuario) => {
+
+    if (verificarIdUsuario(idUsuario)) {
+        let activo = []
+        prestamos.forEach((prestamo) => {
+            if (prestamo.idUsuario === idUsuario && prestamo.estado === 'ACTIVO') {
+                activo.push(prestamo);
+            }
+        });
+
+        if (activo.length === 0) {
+            console.log(`El usuario ${idUsuario} no registra prestamos.`);
+        } else {
+            console.log(`El usuario ${idUsuario} tiene estos prestamos activos:`)
+            activo.forEach(({ idLibro, fechaPrestamo }) => {
+                console.log(`ID LIBRO ${idLibro} - FECHA PRESTAMO ${fechaPrestamo}.`);
+            });
+        }
+
+    } else {
+        console.log('Usuario no registrado.');
+    }
+
+};
+
+console.log("\n📚 PRESTAMOS ACTIVOS POR ID DE USUARIO:");
+prestamosActivos(3);
+prestamosActivos(2);
+prestamosActivos(10);
+
+
+const multasPorUsuario = (idUsuario) => {
+
+    const fechaHoy = new Date()
+    const msPorDia = 1000 * 60 * 60 * 24;
+    const diferencia7Dias = msPorDia * 7;
+
+    if (verificarIdUsuario(idUsuario)) {
+        let multas = [];
+        let diasMulta;
+        prestamos.forEach((prestamo) => {
+            if (prestamo.idUsuario === idUsuario && prestamo.estado === 'ACTIVO') {
+                let diferenciaFechas = fechaHoy.getTime() - prestamo.fechaPrestamo.getTime();
+                if (diferenciaFechas >= diferencia7Dias) {
+                    multas.push(prestamo);
+                    diasMulta = (diferenciaFechas / msPorDia)
+                }
+            }
+        });
+
+        if (multas.length === 0) {
+            console.log(`El usuario ${idUsuario} no registra multas.`);
+        } else {
+            console.log(`\nEl usuario ${idUsuario} tiene estas multas:`)
+            multas.forEach(({ idLibro, fechaPrestamo }) => {
+                console.log(`ID LIBRO ${idLibro} - FECHA PRESTAMO ${fechaPrestamo}. Tiene atraso de ${diasMulta} días.`);
+            });
+        }
+
+    } else {
+        console.log('Usuario no registrado');
+    }
+
+};
+
+console.log('\nIntroduciremos una fecha con multa a propósito al usuario ID 3');
+const fechaHoy = new Date()
+const msPorDia = 1000 * 60 * 60 * 24;
+prestamos[0].fechaPrestamo = new Date(fechaHoy.getTime() - (8 * msPorDia));
+
+multasPorUsuario(3);
+
+console.log('\n Para efectos de la popularidad de los libros, se agrega registro de devolución.');
+console.log('Y otras operaciones para generar historial. \n')
+terminarPrestamo(8, 4);
+terminarPrestamo(6, 3);
+generarPrestamo(6, 4);
+
+const popularidadLibros = function () {
+    let pedidos = [];
+    for ({ idLibro } of prestamos) {
+        pedidos.push(idLibro);
+    }
+
+    const contador = pedidos.reduce((contadorPorLibro, idLibro) => {
+        contadorPorLibro[idLibro] = (contadorPorLibro[idLibro] || 0) + 1;
+        return contadorPorLibro;
+    }, {});
+
+    let aux=0;
+    for (idLibro of pedidos){
+        if (contador[idLibro]>aux){
+            aux=contador[idLibro]
+        }
+    };
+
+    const libro=libros.find(libro=>libro.id===aux);
+    console.log(`El libro más popular es ${libro.titulo} de ${libro.autor}.`)
+}
+
+popularidadLibros();
