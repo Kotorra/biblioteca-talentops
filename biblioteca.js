@@ -309,7 +309,7 @@ prestamos[0].fechaPrestamo = new Date(fechaHoy.getTime() - (8 * msPorDia));
 
 multasPorUsuario(3);
 
-console.log('\n Para efectos de la popularidad de los libros, se agrega registro de devolución.');
+console.log('\n 📋📚Para efectos de la popularidad de los libros, se agrega registro de devolución.');
 console.log('Y otras operaciones para generar historial. \n')
 terminarPrestamo(8, 4);
 terminarPrestamo(6, 3);
@@ -317,7 +317,7 @@ generarPrestamo(6, 4);
 
 const popularidadLibros = function () {
     let pedidos = [];
-    for ({ idLibro } of prestamos) {
+    for (let { idLibro } of prestamos) {
         pedidos.push(idLibro);
     }
 
@@ -327,14 +327,16 @@ const popularidadLibros = function () {
     }, {});
 
     let aux=0;
-    for (idLibro of pedidos){
+    let idPopular;
+    for (let idLibro of pedidos){
         if (contador[idLibro]>aux){
             aux=contador[idLibro]
+            idPopular=idLibro
         }
     };
-
-    const libro=libros.find(libro=>libro.id===aux);
+    const libro=libros.find(libro=>libro.id===idPopular);
     console.log(`El libro más popular es ${libro.titulo} de ${libro.autor}.`)
 }
 
+console.log("\n📊LIBRO MÁS PEDIDO:");
 popularidadLibros();
